@@ -1,207 +1,198 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-type model struct {
-	cursor      int
-	lists       map[string]List
-	currentList int
-	listsKeys   []string
+type status int
+
+const (
+	todo status = iota
+	inprogress
+	done
+)
+
+/* STYLING */
+var (
+	windowStyle = lipgloss.NewStyle().
+			Padding(1, 1)
+	columnStyle = lipgloss.NewStyle().
+			Padding(1, 1).
+			Border(lipgloss.HiddenBorder()).
+			BorderTop(false).
+			BorderBottom(false).
+			BorderRight(false).
+			BorderForeground(lipgloss.Color("67"))
+	focusedStyle = lipgloss.NewStyle().
+			Padding(1, 1).
+			Border(lipgloss.NormalBorder()).
+			BorderTop(false).
+			BorderBottom(false).
+			BorderRight(false).
+			BorderForeground(lipgloss.Color("67"))
+	helpStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+)
+
+/* CUSTOM ITEM (TASK) */
+type Task struct {
+	title       string
+	description string
+	status      status
 }
 
-func initialModel() model {
-	return model{
-		lists: map[string]List{
-			"inprogress": {
-				Title:       "In Progress",
-				Placeholder: "[No item on the list. Select any item and press `s` to start work on the item.]",
-				Items: []Item{
-					{Title: "Test", Desc: "Lorem", Done: false},
-				},
-			},
-			"todo": {
-				Title:       "Todo",
-				Placeholder: "[No item on the list. Press `a` to add new item.]",
-				Items: []Item{
-					{Title: "Test", Desc: "Lorem", Done: false},
-				},
-			},
-			"done": {
-				Title:       "Done",
-				Placeholder: "[No item on the list. Select any item and press `c` to complete it.]",
-				Items: []Item{
-					{Title: "Test", Desc: "Lorem", Done: true},
-				},
-			},
-		},
-		currentList: 0,
-		listsKeys:   []string{"inprogress", "todo", "done"},
-	}
+// list.Item interface
+func (t Task) FilterValue() string {
+	return t.title
 }
 
-type Item struct {
-	Title string
-	Desc  string
-	Done  bool
+func (t Task) Title() string {
+	return t.title
 }
 
-type List struct {
-	Title       string
-	Placeholder string
-	Items       []Item
+func (t Task) Description() string {
+	return t.description
 }
 
-func (m model) Init() tea.Cmd {
+/* MAIN MODEL */
+type Model struct {
+	lists   []list.Model
+	focused status
+	loaded  bool
+}
+
+func NewModel() *Model {
+	return &Model{}
+}
+
+func (m *Model) initLists(width, height int) {
+	defaultList := list.New([]list.Item{}, list.NewDefaultDelegate(), width, height/4)
+	defaultList.SetShowHelp(false)
+
+	m.lists = []list.Model{defaultList, defaultList, defaultList}
+
+	// InProgress List
+	m.lists[inprogress].Title = "In Progress"
+	m.lists[inprogress].SetItems([]list.Item{
+		Task{status: inprogress, title: "Do something", description: "desc"},
+	})
+
+	// Todo List
+	m.lists[todo].Title = "To Do"
+	m.lists[todo].SetItems([]list.Item{
+		Task{status: todo, title: "Do something", description: "desc"},
+		Task{status: todo, title: "Do test something", description: "desc"},
+	})
+
+	// Done List
+	m.lists[done].Title = "Done"
+	m.lists[done].SetItems([]list.Item{
+		Task{status: done, title: "Do something", description: "desc"},
+		Task{status: done, title: "Do test something", description: "desc"},
+		Task{status: done, title: "Do test something", description: "desc"},
+	})
+}
+
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-
-var ErrEmptyList = errors.New("Empty list")
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		if !m.loaded {
+			m.initLists(msg.Width, msg.Height)
+			m.loaded = true
+		}
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case "down", "j":
-			listKey := m.listsKeys[m.currentList]
-
-			if m.cursor < len(m.lists[listKey].Items)-1 {
-				m.cursor++
-			}
 		case "tab":
-			if m.currentList == len(m.listsKeys)-1 {
-				m.currentList = 0
+			if m.focused == 2 {
+				m.focused = 0
 			} else {
-				m.currentList += 1
-			}
-		case "s":
-			listKey := m.listsKeys[m.currentList]
-			list := m.lists[listKey]
-			item := list.Items[m.cursor]
-			nextListKey := m.listsKeys[0]
-
-			// Move item to Done list
-			if list, ok := m.lists[listKey]; ok {
-				list.Items = append(list.Items[:m.cursor], list.Items[m.cursor+1:]...)
-				m.lists[listKey] = list
-			}
-
-			if list, ok := m.lists[nextListKey]; ok {
-				list.Items = append(list.Items, item)
-				m.lists[nextListKey] = list
-			}
-		case "a":
-			item := Item{Title: "New item", Done: false, Desc: ""}
-
-			if list, ok := m.lists[m.listsKeys[1]]; ok {
-				list.Items = append(list.Items, item)
-				m.lists[m.listsKeys[1]] = list
-			}
-		case "c":
-			listKey := m.listsKeys[m.currentList]
-			list := m.lists[listKey]
-			item := list.Items[m.cursor]
-			nextListKey := m.listsKeys[2]
-
-			// Move item to Done list
-			if list, ok := m.lists[listKey]; ok {
-				list.Items = append(list.Items[:m.cursor], list.Items[m.cursor+1:]...)
-				m.lists[listKey] = list
-			}
-
-			if list, ok := m.lists[nextListKey]; ok {
-				item.Done = !item.Done
-				list.Items = append(list.Items, item)
-				m.lists[nextListKey] = list
-			}
-
-		case "d":
-			listKey := m.listsKeys[m.currentList]
-
-			if list, ok := m.lists[listKey]; ok {
-				list.Items = append(list.Items[:m.cursor], list.Items[m.cursor+1:]...)
-				m.lists[listKey] = list
-			}
-		case "enter":
-			listKey := m.listsKeys[m.currentList]
-			nextListKey := m.listsKeys[2]
-
-			if m.cursor < len(m.lists[listKey].Items) {
-				item := m.lists[listKey].Items[m.cursor]
-
-				// Move item to Todo list
-				if item.Done {
-					nextListKey = m.listsKeys[1]
-				}
-
-				// Move item to Done list
-				if list, ok := m.lists[listKey]; ok {
-					list.Items = append(list.Items[:m.cursor], list.Items[m.cursor+1:]...)
-					m.lists[listKey] = list
-				}
-
-				if list, ok := m.lists[nextListKey]; ok {
-					item.Done = !item.Done
-					list.Items = append(list.Items, item)
-					m.lists[nextListKey] = list
-				}
+				m.focused += 1
 			}
 		}
 	}
 
-	return m, nil
+	var cmd tea.Cmd
+	m.lists[m.focused], cmd = m.lists[m.focused].Update(msg)
+	return m, cmd
 }
 
-func (m model) View() string {
-	s := "What should we buy at the market?\n\n"
-
-	for listIndex, key := range m.listsKeys {
-		list := m.lists[key]
-		s += fmt.Sprintf("%s:\n", list.Title)
-
-		if len(list.Items) == 0 {
-			s += list.Placeholder
-		}
-
-		for i, item := range list.Items {
-			cursor := " "
-			checked := " "
-
-			if item.Done {
-				checked = "x"
-			}
-
-			if listIndex == m.currentList {
-				if m.cursor == i {
-					cursor = ">"
-				}
-			}
-			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, item.Title)
-		}
-
-		s += "\n"
+func (m *Model) View() string {
+	if !m.loaded {
+		return "Loading..."
 	}
 
-	s += "\nPress q to quit.\n"
-	return s
+	todoView := m.lists[todo].View()
+	inprogView := m.lists[inprogress].View()
+	doneView := m.lists[done].View()
+
+	sidepanel := lipgloss.JoinVertical(
+		lipgloss.Top,
+		columnStyle.Render(todoView),
+	)
+
+	lists := lipgloss.JoinVertical(
+		lipgloss.Top,
+		columnStyle.Render(inprogView),
+		focusedStyle.Render(todoView),
+		columnStyle.Render(doneView),
+	)
+
+	view := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+    lipgloss.Width(400).Render(lists),
+		sidepanel,
+	)
+
+	return view
+
+	// switch m.focused {
+	// case todo:
+	// 	return lipgloss.JoinVertical(
+	// 		lipgloss.Left,
+	// 		columnStyle.Render(inprogView),
+	// 		focusedStyle.Render(todoView),
+	// 		columnStyle.Render(doneView),
+	// 	)
+	// case inprogress:
+	// 	return lipgloss.JoinVertical(
+	// 		lipgloss.Left,
+	// 		focusedStyle.Render(inprogView),
+	// 		columnStyle.Render(todoView),
+	// 		columnStyle.Render(doneView),
+	// 	)
+	// case done:
+	// 	return lipgloss.JoinVertical(
+	// 		lipgloss.Left,
+	// 		columnStyle.Render(inprogView),
+	// 		columnStyle.Render(todoView),
+	// 		focusedStyle.Render(doneView),
+	// 	)
+	// }
+	//
+	// return lipgloss.JoinVertical(
+	// 	lipgloss.Left,
+	// 	columnStyle.Render(todoView),
+	// 	columnStyle.Render(inprogView),
+	// 	columnStyle.Render(doneView),
+	// )
 }
 
+/* MAIN */
 func main() {
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	m := NewModel()
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
