@@ -64,7 +64,6 @@ func NewList(items []list.Item, width, height int) list.Model {
   listDeleage.ShowDescription = false
 	list := list.New(items, listDeleage, width, height)
 
-
   list.SetFilteringEnabled(false)
 	list.SetShowTitle(false)
 	list.SetShowHelp(false)
