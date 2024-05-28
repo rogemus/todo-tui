@@ -1,34 +1,61 @@
+# Architecture
+
+```
+                    ┌───────────────┐                    
+                    │   MainView    │                    
+                    │ (tui_view.go) │                    
+                    └───────┬───────┘                    
+                            │                            
+           ┌────────────────┴────────────────┐           
+           │                                 │           
+ ┌─────────┴──────────┐           ┌──────────┴─────────┐ 
+ │     ListsView      │           │    SidebarView     │ 
+ │  (lists_view.go)   │           │ (sidebar_view.go)  │ 
+ └────────────────────┘           └────────────────────┘
+
+
+ MainView                                                
+┌──────────────────────────────┬───────────────────────┐ 
+│ ListView                     │ DetailsView           │ 
+│                              │                       │ 
+│                              │                       │ 
+│                              │                       │ 
+│                              │                       │ 
+└──────────────────────────────┴───────────────────────┘ 
+```
+
 # Mockup
 ```
 ┌───────────────────────────────────────────────────────────────────┬──────────────────────────────────────────┐
 │                                                                   │                                          │
 │    In Progress                                                    │  Title                                   │
 │    ────────────────────────────────                               │  ──────────────────────────────────────  │
-│   ┌─┐ Setup PostgreSQL for production dev                         │  Lorem ipsum dolor sit                   │
-│   └─┘ Lorem ipsum dolor sit amet, consectetur                     │  amet, consectetur adipiscing elit.      │
-│       adipiscing elit...                                          │  Donec a mauris rhoncus nunc vehicula    │
-│                                                                   │  faucibus non auctor neque.              │
-│ │  Todo                                                           │                                          │
-│ │  ────────────────────────────────                               │    * Lorem ipsum                         │
-│ │ ┌─┐ Setup PostgreSQL for production server                      │    * Lorem ipsum 1                       │
-│ │ └─┘ Lorem ipsum dolor sit amet, consectetur                     │                                          │
-│ │     adipiscing elit...                                          │  Quisque eget lacus a ex sodales         │
-│ │                                                                 │  accumsan. Quisque at sagittis ipsum.    │
-│ │ ┌─┐ Setup PostgreSQL for production server                      │  Morbi consequat non est quis aliquam.   │
-│ │ └─┘ Lorem ipsum dolor sit amet, consectetur                     │  Morbi ac nisl sed lacus varius aliquet  │
-│ │     adipiscing elit...                                          │  sit amet vitae felis. Aenean vitae      │
-│ │                                                                 │  nunc ut ligula fringilla rutrum.        │
-│                                                                   │  Praesent rhoncus, ligula eget iaculis   │
-│                                █ █ █                              │  accumsan, turpis odio viverra orci, a   │
-│                                                                   │  faucibus nisl risus non nunc. Integer   │
-│                                                                   │  rutrum lorem nec ex gravida bibendum.   │
+│   ┌─┐ Setup PostgreSQL for production dev                         │  #tag5 #tag2                             │
+│   └─┘ #tag2                                                       │                                          │
 │                                                                   │                                          │
-│    Done                                                           │                                          │
-│    ────────────────────────────────                               │                                          │
+│                                                                   │  Lorem ipsum dolor sit                   │
+│ │  Todo                                                           │  amet, consectetur adipiscing elit.      │
+│ │  ────────────────────────────────                               │  Donec a mauris rhoncus nunc vehicula    │
+│ │ ┌─┐ Setup PostgreSQL for production server                      │  faucibus non auctor neque.              │
+│ │ └─┘ #tag1                                                       │                                          │
+│ │                                                                 │    * Lorem ipsum                         │
+│ │                                                                 │    * Lorem ipsum 1                       │
+│ │ ┌─┐ Setup PostgreSQL for production server                      │                                          │
+│ │ └─┘ #tag1 #tag2 #tag3                                           │  Quisque eget lacus a ex sodales         │
+│ │                                                                 │  accumsan. Quisque at sagittis ipsum.    │
+│ │                                                                 │  Morbi consequat non est quis aliquam.   │
+│ │                                                                 │  Morbi ac nisl sed lacus varius aliquet  │
+│ │                              █ █ █                              │  sit amet vitae felis. Aenean vitae      │
+│                                                                   │  nunc ut ligula fringilla rutrum.        │
+│                                                                   │  Praesent rhoncus, ligula eget iaculis   │
+│                                                                   │  accumsan, turpis odio viverra orci, a   │
+│    Done                                                           │  faucibus nisl risus non nunc. Integer   │
+│    ────────────────────────────────                               │  rutrum lorem nec ex gravida bibendum.   │
 │   ╔═╗ Setup PostgreSQL for production server                      │                                          │
-│   ╚═╝ Lorem ipsum dolor sit amet, consectetur                     │                                          │
-│       adipiscing elit...                                          │                                          │
+│   ╚═╝                                                             │                                          │
+│        #tag5                                                      │                                          │
 │                                                                   │                                          │
 │                                                                   │                                          │
 └───────────────────────────────────────────────────────────────────┴──────────────────────────────────────────┘
 ```
+
