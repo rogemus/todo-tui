@@ -96,6 +96,39 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor += 1
 				m.lists[listKey].SetSelected(m.cursor)
 			}
+		case key.Matches(msg, m.keys.DeleteTask):
+			listKey := m.listKeys[m.currentList]
+			m.lists[listKey].RemoveItem(m.cursor)
+		case key.Matches(msg, m.keys.MarkAsDone):
+			listKey := m.listKeys[m.currentList]
+			items := m.lists[listKey].Items()
+
+			if listKey != "done" && len(items) > 0 {
+				item := items[m.cursor]
+				m.lists[listKey].RemoveItem(m.cursor)
+				m.lists["done"].AddItem(item)
+			}
+		case key.Matches(msg, m.keys.AddTask):
+			item := models.Item{Title: "New Item", Description: ""}
+			m.lists["todo"].AddItem(item)
+		case key.Matches(msg, m.keys.StartTask):
+			listKey := m.listKeys[m.currentList]
+			items := m.lists[listKey].Items()
+
+			if listKey != "inprogress" && len(items) > 0 {
+				item := items[m.cursor]
+				m.lists[listKey].RemoveItem(m.cursor)
+				m.lists["inprogress"].AddItem(item)
+			}
+		case key.Matches(msg, m.keys.MoveToTodo):
+			listKey := m.listKeys[m.currentList]
+			items := m.lists[listKey].Items()
+
+			if listKey != "todo" && len(items) > 0 {
+				item := items[m.cursor]
+				m.lists[listKey].RemoveItem(m.cursor)
+				m.lists["todo"].AddItem(item)
+			}
 		}
 	}
 

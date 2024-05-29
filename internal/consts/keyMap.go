@@ -8,6 +8,11 @@ type KeyMap struct {
 	Quit        key.Binding
 	Help        key.Binding
 	ChangeFocus key.Binding
+	AddTask     key.Binding
+	MarkAsDone  key.Binding
+	DeleteTask  key.Binding
+	StartTask   key.Binding
+	MoveToTodo  key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
@@ -41,5 +46,25 @@ var Keys = KeyMap{
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c"),
 		key.WithHelp("ctrl+c", "quit"),
+	),
+	AddTask: key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "add task"),
+	),
+	MarkAsDone: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "mark as done"),
+	),
+	DeleteTask: key.NewBinding(
+		key.WithKeys("D"),
+		key.WithHelp("D", "delete task"),
+	),
+	MoveToTodo: key.NewBinding(
+		key.WithKeys("E"),
+		key.WithHelp("E", "stop work/move to todo"),
+	),
+	StartTask: key.NewBinding(
+		key.WithKeys("s"),
+		key.WithHelp("s", "start work"),
 	),
 }

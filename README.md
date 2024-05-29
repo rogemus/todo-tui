@@ -1,8 +1,8 @@
 # TODO
-- [ ] Add task
-- [ ] Remove task
-- [ ] Rename task
-- [ ] Mark as done
+- [x] Add task
+- [x] Remove task
+- [x] Rename task
+- [x] Mark as done
 - [x] Show key bindings
 - [ ] Save data to db
 - [ ] Show Details
