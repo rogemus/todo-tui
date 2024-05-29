@@ -1,3 +1,18 @@
+# TODO
+- [ ] Add task
+- [ ] Remove task
+- [ ] Rename task
+- [ ] Mark as done
+- [x] Show key bindings
+- [ ] Save data to db
+- [ ] Show Details
+- [ ] Ability to add tags
+- [ ] Tags autocomplete
+- [ ] Edit on DetailsView
+- [ ] Config in file
+- [ ] Change keybindings in config
+- [ ] Remote db
+
 # Architecture
 
 ```

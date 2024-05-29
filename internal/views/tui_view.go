@@ -1,6 +1,10 @@
 package views
 
 import (
+	"todo-tui/internal/consts"
+
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -16,6 +20,9 @@ type TuiModel struct {
 	state   state
 	lists   tea.Model
 	details tea.Model
+	help    help.Model
+	keys    consts.KeyMap
+	lastKey string
 }
 
 func NewTuiModel() TuiModel {
@@ -23,6 +30,8 @@ func NewTuiModel() TuiModel {
 		state:   listsView,
 		lists:   NewListsModel(),
 		details: NewDetailsModel(),
+		keys:    consts.Keys,
+		help:    help.New(),
 	}
 }
 
@@ -34,11 +43,14 @@ func (m TuiModel) Init() tea.Cmd {
 var containerStyles = lipgloss.NewStyle().Padding(1)
 
 func (m TuiModel) View() string {
-	return containerStyles.Render(
-		lipgloss.JoinHorizontal(lipgloss.Top,
-			m.lists.View(),
-			m.details.View(),
-		))
+	return lipgloss.JoinVertical(lipgloss.Top,
+		containerStyles.Render(
+			lipgloss.JoinHorizontal(lipgloss.Top,
+				m.lists.View(),
+				m.details.View(),
+			)),
+		m.help.View(m.keys),
+	)
 }
 
 func (m TuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,9 +58,13 @@ func (m TuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.help.Width = msg.Width
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "ctrl+c":
+		switch {
+		case key.Matches(msg, m.keys.Help):
+			m.help.ShowAll = !m.help.ShowAll
+		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		default:
 			switch m.state {

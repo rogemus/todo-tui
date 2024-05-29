@@ -1,9 +1,12 @@
 package views
 
 import (
+	"todo-tui/internal/consts"
+	"todo-tui/internal/models"
+
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"todo-tui/internal/models"
 )
 
 type ListsViewModel struct {
@@ -11,6 +14,7 @@ type ListsViewModel struct {
 	currentList int
 	listKeys    [3]string
 	lists       map[string]*models.List
+	keys        consts.KeyMap
 }
 
 func NewListsModel() ListsViewModel {
@@ -43,6 +47,7 @@ func NewListsModel() ListsViewModel {
 		currentList: 0,
 		lists:       lists,
 		listKeys:    [3]string{"inprogress", "todo", "done"},
+		keys:        consts.Keys,
 	}
 }
 
@@ -62,8 +67,8 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "up", "k":
+		switch {
+		case key.Matches(msg, m.keys.Up):
 			listKey := m.listKeys[m.currentList]
 			list := m.lists[listKey]
 			sel := list.Selected()
@@ -72,7 +77,7 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor -= 1
 				list.SetSelected(m.cursor)
 			}
-		case "tab":
+		case key.Matches(msg, m.keys.ChangeFocus):
 			m.lists[m.listKeys[m.currentList]].SetSelected(-9999)
 
 			if m.currentList == len(m.listKeys)-1 {
@@ -83,7 +88,7 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.cursor = 0
 			m.lists[m.listKeys[m.currentList]].SetSelected(0)
-		case "down", "j":
+		case key.Matches(msg, m.keys.Down):
 			listKey := m.listKeys[m.currentList]
 			sel := m.lists[listKey].Selected()
 
