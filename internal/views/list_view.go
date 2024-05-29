@@ -42,6 +42,7 @@ func NewListsModel() ListsViewModel {
 	lists["done"] = models.NewList("Done", doneTasks)
 
 	lists["inprogress"].SetSelected(0)
+
 	return ListsViewModel{
 		cursor:      0,
 		currentList: 0,
@@ -63,6 +64,14 @@ func (m ListsViewModel) View() string {
 	)
 }
 
+func handleItemChange(item models.Item) tea.Cmd {
+	return func() tea.Msg {
+		return SelectedItemMsg{
+			Item: item,
+		}
+	}
+}
+
 func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -70,13 +79,12 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Up):
 			listKey := m.listKeys[m.currentList]
-			list := m.lists[listKey]
-			sel := list.Selected()
 
-			if sel > 0 {
+			if m.cursor > 0 {
 				m.cursor -= 1
-				list.SetSelected(m.cursor)
+				m.lists[listKey].SetSelected(m.cursor)
 			}
+			cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 		case key.Matches(msg, m.keys.ChangeFocus):
 			m.lists[m.listKeys[m.currentList]].SetSelected(-9999)
 
@@ -88,6 +96,7 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.cursor = 0
 			m.lists[m.listKeys[m.currentList]].SetSelected(0)
+			cmd = handleItemChange(m.lists[m.listKeys[m.currentList]].Items()[m.cursor])
 		case key.Matches(msg, m.keys.Down):
 			listKey := m.listKeys[m.currentList]
 			sel := m.lists[listKey].Selected()
@@ -96,6 +105,7 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor += 1
 				m.lists[listKey].SetSelected(m.cursor)
 			}
+			cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 		case key.Matches(msg, m.keys.DeleteTask):
 			listKey := m.listKeys[m.currentList]
 			m.lists[listKey].RemoveItem(m.cursor)

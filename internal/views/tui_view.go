@@ -2,6 +2,7 @@ package views
 
 import (
 	"todo-tui/internal/consts"
+	"todo-tui/internal/models"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -15,6 +16,10 @@ const (
 	listsView state = iota
 	detailsView
 )
+
+type SelectedItemMsg struct {
+	Item models.Item
+}
 
 type TuiModel struct {
 	state   state
@@ -58,6 +63,8 @@ func (m TuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case SelectedItemMsg:
+		m.details, cmd = m.details.Update(msg)
 	case tea.WindowSizeMsg:
 		m.help.Width = msg.Width
 	case tea.KeyMsg:
