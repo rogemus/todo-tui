@@ -20,14 +20,14 @@ type ListsViewModel struct {
 }
 
 func NewListsModel(repo storage.TasksRepository) ListsViewModel {
-	inprogressTasks, _ := repo.GetTasks(0)
-	todoTasks, _ := repo.GetTasks(1)
-	doneTasks, _ := repo.GetTasks(2)
+	inprogressTasks, _ := repo.GetTasks(models.IN_PROGRESS)
+	todoTasks, _ := repo.GetTasks(models.TODO)
+	doneTasks, _ := repo.GetTasks(models.DONE)
 
 	lists := make(map[string]*models.List)
-	lists["inprogress"] = models.NewList("In Progress", inprogressTasks)
-	lists["todo"] = models.NewList("To Do", todoTasks)
-	lists["done"] = models.NewList("Done", doneTasks)
+	lists["inprogress"] = models.NewList("In Progress", "No item in In Progress list ...", inprogressTasks)
+	lists["todo"] = models.NewList("To Do", "No item in To Do list ...", todoTasks)
+	lists["done"] = models.NewList("Done", "No item in Done list ...", doneTasks)
 
 	lists["inprogress"].SetSelected(0)
 
@@ -84,8 +84,10 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.cursor = 0
-			m.lists[m.listKeys[m.currentList]].SetSelected(0)
-			cmd = handleItemChange(m.lists[m.listKeys[m.currentList]].Items()[m.cursor])
+			if len(m.lists[m.listKeys[m.currentList]].Items()) > 0 {
+				m.lists[m.listKeys[m.currentList]].SetSelected(0)
+				cmd = handleItemChange(m.lists[m.listKeys[m.currentList]].Items()[m.cursor])
+			}
 		case key.Matches(msg, m.keys.Down):
 			listKey := m.listKeys[m.currentList]
 			sel := m.lists[listKey].Selected()
@@ -122,8 +124,8 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if listKey != "inprogress" && len(items) > 0 {
 				item := items[m.cursor]
 				m.lists[listKey].RemoveItem(m.cursor)
-				m.lists["inprogress"].AddItem(item)
 				item.Status = models.IN_PROGRESS
+				m.lists["inprogress"].AddItem(item)
 				m.repo.UpdateTask(item)
 			}
 		case key.Matches(msg, m.keys.MoveToTodo):
@@ -133,8 +135,8 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if listKey != "todo" && len(items) > 0 {
 				item := items[m.cursor]
 				m.lists[listKey].RemoveItem(m.cursor)
-				m.lists["todo"].AddItem(item)
 				item.Status = models.TODO
+				m.lists["todo"].AddItem(item)
 				m.repo.UpdateTask(item)
 			}
 		}

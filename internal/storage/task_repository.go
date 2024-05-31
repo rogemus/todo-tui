@@ -8,7 +8,7 @@ import (
 type TasksRepository interface {
 	AddTask(task models.Item) error
 	RemoveTask(taskId int) error
-	GetTasks(status int) ([]models.Item, error)
+	GetTasks(status models.Status) ([]models.Item, error)
 	GetTask(taskId int) (models.Item, error)
   UpdateTask(task models.Item) error
 	CreateNewDb() error
@@ -41,7 +41,7 @@ func (r *tasksRepository) CreateNewDb() error {
 }
 
 // status(int): 0 - inprogress | 1 - todo | 2 - done
-func (r *tasksRepository) GetTasks(status int) ([]models.Item, error) {
+func (r *tasksRepository) GetTasks(status models.Status) ([]models.Item, error) {
 	items := make([]models.Item, 0)
 	query := `SELECT id, title, description, status FROM tasks WHERE status = ?`
 	rows, err := r.db.Query(query, status)
