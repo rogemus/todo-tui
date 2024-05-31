@@ -1,13 +1,18 @@
 package views
 
 import (
+	"database/sql"
+	"log"
+	"os"
 	"todo-tui/internal/consts"
 	"todo-tui/internal/models"
+	"todo-tui/internal/storage"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type state int
@@ -27,14 +32,24 @@ type TuiModel struct {
 	details tea.Model
 	help    help.Model
 	keys    consts.KeyMap
-	lastKey string
 }
 
+const dbName = "tasks.db/?parseTime=true"
+
 func NewTuiModel() TuiModel {
+	db, _ := sql.Open("sqlite3", dbName)
+	tasksRepo := storage.NewTasksRepository(db)
+	err := tasksRepo.CreateNewDb()
+
+	if err != nil {
+		log.Printf("Error while creating DB")
+		os.Exit(1)
+	}
+
 	return TuiModel{
 		state:   listsView,
-		lists:   NewListsModel(),
-		details: NewDetailsModel(),
+		lists:   NewListsModel(tasksRepo),
+		details: NewDetailsModel(tasksRepo),
 		keys:    consts.Keys,
 		help:    help.New(),
 	}

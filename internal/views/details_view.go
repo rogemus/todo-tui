@@ -2,17 +2,21 @@ package views
 
 import (
 	"todo-tui/internal/models"
+	"todo-tui/internal/storage"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type DetailsViewModel struct {
-	sel models.Item
+	sel  models.Item
+	repo storage.TasksRepository
 }
 
-func NewDetailsModel() DetailsViewModel {
-	return DetailsViewModel{}
+func NewDetailsModel(repo storage.TasksRepository) DetailsViewModel {
+	return DetailsViewModel{
+		repo: repo,
+	}
 }
 
 func (m DetailsViewModel) Init() tea.Cmd {

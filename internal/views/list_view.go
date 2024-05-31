@@ -3,6 +3,7 @@ package views
 import (
 	"todo-tui/internal/consts"
 	"todo-tui/internal/models"
+	"todo-tui/internal/storage"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,26 +16,13 @@ type ListsViewModel struct {
 	listKeys    [3]string
 	lists       map[string]*models.List
 	keys        consts.KeyMap
+	repo        storage.TasksRepository
 }
 
-func NewListsModel() ListsViewModel {
-	//TODO: store and load items from file/db
-	var inprogressTasks = []models.Item{
-		{Title: "Warm light", Description: "Like around 2700 Kelvin"},
-		{Title: "Warm light", Description: ""},
-	}
-
-	var todoTasks = []models.Item{
-		{Title: "20° Weather", Description: "Celsius, not Fahrenheit"},
-		{Title: "Warm light", Description: ""},
-	}
-	var doneTasks = []models.Item{
-		{Title: "20° Weather", Description: "Celsius, not Fahrenheit"},
-		{Title: "Table tennis", Description: "It’s surprisingly exhausting"},
-		{Title: "Milk crates", Description: "Great for packing in your extra stuff"},
-		{Title: "Afternoon tea", Description: "Especially the tea sandwich part"},
-		{Title: "Warm light", Description: ""},
-	}
+func NewListsModel(repo storage.TasksRepository) ListsViewModel {
+	inprogressTasks, _ := repo.GetTasks(0)
+	todoTasks, _ := repo.GetTasks(1)
+	doneTasks, _ := repo.GetTasks(2)
 
 	lists := make(map[string]*models.List)
 	lists["inprogress"] = models.NewList("In Progress", inprogressTasks)
@@ -49,6 +37,7 @@ func NewListsModel() ListsViewModel {
 		lists:       lists,
 		listKeys:    [3]string{"inprogress", "todo", "done"},
 		keys:        consts.Keys,
+		repo:        repo,
 	}
 }
 
@@ -108,7 +97,9 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 		case key.Matches(msg, m.keys.DeleteTask):
 			listKey := m.listKeys[m.currentList]
+			item := m.lists[listKey].Items()[m.cursor]
 			m.lists[listKey].RemoveItem(m.cursor)
+			m.repo.RemoveTask(item.Id)
 		case key.Matches(msg, m.keys.MarkAsDone):
 			listKey := m.listKeys[m.currentList]
 			items := m.lists[listKey].Items()
@@ -116,11 +107,14 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if listKey != "done" && len(items) > 0 {
 				item := items[m.cursor]
 				m.lists[listKey].RemoveItem(m.cursor)
+				item.Status = models.DONE
 				m.lists["done"].AddItem(item)
+				m.repo.UpdateTask(item)
 			}
 		case key.Matches(msg, m.keys.AddTask):
-			item := models.Item{Title: "New Item", Description: ""}
+			item := models.Item{Title: "New Item", Description: "", Status: models.TODO}
 			m.lists["todo"].AddItem(item)
+			m.repo.AddTask(item)
 		case key.Matches(msg, m.keys.StartTask):
 			listKey := m.listKeys[m.currentList]
 			items := m.lists[listKey].Items()
@@ -129,6 +123,8 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item := items[m.cursor]
 				m.lists[listKey].RemoveItem(m.cursor)
 				m.lists["inprogress"].AddItem(item)
+				item.Status = models.IN_PROGRESS
+				m.repo.UpdateTask(item)
 			}
 		case key.Matches(msg, m.keys.MoveToTodo):
 			listKey := m.listKeys[m.currentList]
@@ -138,6 +134,8 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				item := items[m.cursor]
 				m.lists[listKey].RemoveItem(m.cursor)
 				m.lists["todo"].AddItem(item)
+				item.Status = models.TODO
+				m.repo.UpdateTask(item)
 			}
 		}
 	}

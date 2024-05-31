@@ -22,15 +22,16 @@ var titleStyle = lipgloss.NewStyle().
 type Status int
 
 const (
-	TODO Status = iota
-	IN_PROGRESS
+	IN_PROGRESS Status = iota
+	TODO
 	DONE
 )
 
 type Item struct {
+	Id          int
 	Title       string
 	Description string
-	Created_at  time.Time
+	CreatedAt   time.Time
 	Status      Status
 }
 
