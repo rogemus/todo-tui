@@ -3,26 +3,34 @@ package consts
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap struct {
-	Up          key.Binding
-	Down        key.Binding
-	Quit        key.Binding
-	Help        key.Binding
-	ChangeFocus key.Binding
-	AddTask     key.Binding
-	MarkAsDone  key.Binding
-	DeleteTask  key.Binding
-	StartTask   key.Binding
-	MoveToTodo  key.Binding
+	Up            key.Binding
+	Down          key.Binding
+	Quit          key.Binding
+	Help          key.Binding
+	ChangeFocus   key.Binding
+	AddTask       key.Binding
+	MarkAsDone    key.Binding
+	DeleteTask    key.Binding
+	StartTask     key.Binding
+	MoveToTodo    key.Binding
+	ToggleDetails key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{k.Up, k.Down, k.ChangeFocus, k.AddTask, k.Help}
 }
 
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down},
-		{k.Help, k.Quit, k.ChangeFocus},
+		{k.Up},
+		{k.Down},
+		{k.AddTask},
+		{k.DeleteTask},
+		{k.MarkAsDone},
+		{k.MoveToTodo},
+		{k.Help},
+		{k.ChangeFocus},
+		{k.Quit},
 	}
 }
 
@@ -66,5 +74,9 @@ var Keys = KeyMap{
 	StartTask: key.NewBinding(
 		key.WithKeys("s"),
 		key.WithHelp("s", "start work"),
+	),
+	ToggleDetails: key.NewBinding(
+		key.WithKeys("B"),
+		key.WithHelp("B", "show/hide details"),
 	),
 }

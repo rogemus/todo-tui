@@ -2,18 +2,22 @@ package models
 
 import (
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
 	"time"
+	"todo-tui/internal/consts"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 /* Styles */
+
+var listContainer = lipgloss.NewStyle()
 
 var listTitleStyle = lipgloss.NewStyle().
 	Border(lipgloss.NormalBorder()).
 	BorderTop(false).
 	BorderLeft(false).
 	BorderRight(false).
-	BorderForeground(lipgloss.Color("8")).
+	BorderForeground(consts.ColSubtle).
 	PaddingLeft(1).
 	Bold(true)
 
@@ -25,7 +29,7 @@ var enumeratorStyle = lipgloss.NewStyle().
 	BorderTop(false).
 	BorderBottom(false).
 	BorderLeft(true).
-  PaddingRight(1)
+	PaddingRight(1)
 
 var enumeratorFocusedStyle = enumeratorStyle.
 	BorderStyle(lipgloss.ThickBorder()).
@@ -70,6 +74,9 @@ type List struct {
 	placeholder string
 	items       []Item
 	selected    int
+	Width       int
+	Heigth      int
+	viewLimit   int
 }
 
 func NewList(title string, placeholder string, items []Item) *List {
@@ -78,6 +85,7 @@ func NewList(title string, placeholder string, items []Item) *List {
 		placeholder: placeholder,
 		items:       items,
 		selected:    -9999,
+		viewLimit:   5,
 	}
 }
 
@@ -85,28 +93,36 @@ func (l *List) SetSelected(index int) {
 	l.selected = index
 }
 
-func (l *List) Selected() int {
+func (l List) Selected() int {
 	return l.selected
 }
 
-func (l *List) Items() []Item {
+func (l List) Items() []Item {
 	return l.items
 }
 
 func (l *List) AddItem(item Item) {
-	l.items = append(l.items, item)
+	l.items = append([]Item{item}, l.items...)
 }
 
 func (l *List) UpdateItem(index int, item Item) {
 	l.items[index] = item
 }
 
-func (l *List) Title() string {
+func (l List) Title() string {
 	return listTitleStyle.Render(l.title)
 }
 
 func (l *List) RemoveItem(index int) {
 	l.items = append(l.items[:index], l.items[index+1:]...)
+}
+
+func (l *List) SetSize(width, heigth int) {
+	l.Width = width
+	l.Heigth = heigth
+	listContainer = listContainer.Width(l.Width).Height(l.Heigth)
+	listTitleStyle = listTitleStyle.Width(l.Width)
+	// itemTitleStyle = itemTitleStyle.Width(l.Width)
 }
 
 func (l *List) View() string {
@@ -118,6 +134,10 @@ func (l *List) View() string {
 	}
 
 	for index, item := range l.items {
+		if index == l.viewLimit {
+			break
+		}
+
 		part_enumarator := enumeratorStyle.Render()
 		part_status := "[ ]"
 		part_title := itemTitleStyle.Render(item.Title)
@@ -141,5 +161,5 @@ func (l *List) View() string {
 		view += "\n"
 	}
 
-	return view
+	return listContainer.Render(view)
 }

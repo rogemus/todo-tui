@@ -17,6 +17,8 @@ type ListsViewModel struct {
 	lists       map[string]*models.List
 	keys        consts.KeyMap
 	repo        storage.TasksRepository
+	Height      int
+	Width       int
 }
 
 func NewListsModel(repo storage.TasksRepository) ListsViewModel {
@@ -45,11 +47,26 @@ func (m ListsViewModel) Init() tea.Cmd {
 	return nil
 }
 
+func (m ListsViewModel) SetSize(width, height int) {
+	m.Width = width
+	m.Height = height
+
+	singleListHeight := (height / 3) - 3
+	m.lists["inprogress"].SetSize(m.Width, singleListHeight)
+	m.lists["todo"].SetSize(m.Width, singleListHeight)
+	m.lists["done"].SetSize(m.Width, singleListHeight)
+	listViewStyle = listViewStyle.Height(m.Height)
+}
+
+var listViewStyle = lipgloss.NewStyle()
+
 func (m ListsViewModel) View() string {
-	return lipgloss.JoinVertical(lipgloss.Top,
-		m.lists["inprogress"].View(),
-		m.lists["todo"].View(),
-		m.lists["done"].View(),
+	return listViewStyle.Render(
+		lipgloss.JoinVertical(lipgloss.Top,
+			m.lists["inprogress"].View(),
+			m.lists["todo"].View(),
+			m.lists["done"].View(),
+		),
 	)
 }
 
@@ -61,7 +78,7 @@ func handleItemChange(item models.Item) tea.Cmd {
 	}
 }
 
-func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ListsViewModel) Update(msg tea.Msg) (ListsViewModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -69,11 +86,13 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Up):
 			listKey := m.listKeys[m.currentList]
 
-			if m.cursor > 0 {
-				m.cursor -= 1
-				m.lists[listKey].SetSelected(m.cursor)
+			if len(m.lists[listKey].Items()) > 0 {
+				if m.cursor > 0 {
+					m.cursor -= 1
+					m.lists[listKey].SetSelected(m.cursor)
+				}
+				cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 			}
-			cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 		case key.Matches(msg, m.keys.ChangeFocus):
 			m.lists[m.listKeys[m.currentList]].SetSelected(-9999)
 
@@ -92,11 +111,14 @@ func (m ListsViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			listKey := m.listKeys[m.currentList]
 			sel := m.lists[listKey].Selected()
 
-			if sel < len(m.lists[listKey].Items())-1 {
-				m.cursor += 1
-				m.lists[listKey].SetSelected(m.cursor)
+			if len(m.lists[listKey].Items()) > 0 {
+				if sel < len(m.lists[listKey].Items())-1 {
+					m.cursor += 1
+					m.lists[listKey].SetSelected(m.cursor)
+				}
+				cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
 			}
-			cmd = handleItemChange(m.lists[listKey].Items()[m.cursor])
+
 		case key.Matches(msg, m.keys.DeleteTask):
 			listKey := m.listKeys[m.currentList]
 			item := m.lists[listKey].Items()[m.cursor]
