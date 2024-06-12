@@ -47,7 +47,7 @@ var doneItemTitleStyle = itemTitleStyle.
 var descStyle = lipgloss.NewStyle().
 	Faint(true)
 
-var placeholder = lipgloss.NewStyle().
+var placeholderStyle = lipgloss.NewStyle().
 	PaddingLeft(1).
 	PaddingBottom(1).
 	Faint(true)
@@ -110,7 +110,10 @@ func (l *List) UpdateItem(index int, item Item) {
 }
 
 func (l List) Title() string {
-	return listTitleStyle.Render(l.title)
+	return listTitleStyle.Render(
+		l.title,
+		descStyle.Render(fmt.Sprintf("(%d)", len(l.items))),
+	)
 }
 
 func (l *List) RemoveItem(index int) {
@@ -120,8 +123,8 @@ func (l *List) RemoveItem(index int) {
 func (l *List) SetSize(width, heigth int) {
 	l.Width = width
 	l.Heigth = heigth
-	listContainer = listContainer.Width(l.Width).Height(l.Heigth)
-	listTitleStyle = listTitleStyle.Width(l.Width)
+	listContainer = listContainer.Height(l.Heigth)
+	// listTitleStyle = listTitleStyle.Width(l.Width)
 	// itemTitleStyle = itemTitleStyle.Width(l.Width)
 }
 
@@ -130,7 +133,7 @@ func (l *List) View() string {
 	view += fmt.Sprintf("%s\n", l.Title())
 
 	if len(l.items) == 0 {
-		view += placeholder.Render(l.placeholder)
+		view += placeholderStyle.Render(l.placeholder)
 	}
 
 	for index, item := range l.items {

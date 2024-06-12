@@ -15,11 +15,15 @@ type DetailsViewModel struct {
 	repo   storage.TasksRepository
 	Width  int
 	Height int
+	edit   bool
+	title  string
+	desc   string
 }
 
 func NewDetailsModel(repo storage.TasksRepository) DetailsViewModel {
 	return DetailsViewModel{
 		repo: repo,
+		edit: true,
 	}
 }
 
@@ -100,6 +104,14 @@ func (m DetailsViewModel) Update(msg tea.Msg) (DetailsViewModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SelectedItemMsg:
 		m.sel = msg.Item
+	case tea.KeyMsg:
+		key := msg.String()
+
+		if m.edit {
+			m.sel.Title = m.sel.Title + key
+			print(key)
+		}
 	}
+
 	return m, nil
 }

@@ -15,11 +15,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type state int
+type focusedView int
 
 const (
-	listsView state = iota
-	detailsView
+	LIST_VIEW focusedView = iota
+	DETAILS_VIEW
+	CREATE_VIEW
 )
 
 type SelectedItemMsg struct {
@@ -27,12 +28,13 @@ type SelectedItemMsg struct {
 }
 
 type TuiModel struct {
-	state          state
-	lists          ListsViewModel
-	details        DetailsViewModel
-	help           help.Model
-	keys           consts.KeyMap
-	detailsVisible bool
+	listsViewModel   ListsViewModel
+	detailsViewModel DetailsViewModel
+	createViewModel  CreateViewModel
+	help             help.Model
+	keys             consts.KeyMap
+	detailsVisible   bool
+	focusedView      focusedView
 }
 
 const dbName = "tasks.db/?parseTime=true"
@@ -48,12 +50,13 @@ func NewTuiModel() TuiModel {
 	}
 
 	return TuiModel{
-		state:          listsView,
-		lists:          NewListsModel(tasksRepo),
-		details:        NewDetailsModel(tasksRepo),
-		keys:           consts.Keys,
-		help:           help.New(),
-		detailsVisible: false,
+		focusedView:      LIST_VIEW,
+		listsViewModel:   NewListsModel(tasksRepo),
+		detailsViewModel: NewDetailsModel(tasksRepo),
+		createViewModel:  NewCreateView(tasksRepo),
+		keys:             consts.Keys,
+		help:             help.New(),
+		detailsVisible:   false,
 	}
 }
 
@@ -78,15 +81,19 @@ func (m TuiModel) View() string {
 	divider := ""
 	details := ""
 
+	if m.focusedView == CREATE_VIEW {
+		return m.createViewModel.View()
+	}
+
 	if m.detailsVisible {
 		divider = dividerStyles.Render()
-		details = m.details.View()
+		details = m.detailsViewModel.View()
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top,
 		containerStyles.Render(
 			lipgloss.JoinHorizontal(lipgloss.Top,
-				m.lists.View(),
+				m.listsViewModel.View(),
 				divider,
 				details,
 			)),
@@ -100,14 +107,14 @@ func (m TuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case SelectedItemMsg:
-		m.details, cmd = m.details.Update(msg)
+		m.detailsViewModel, cmd = m.detailsViewModel.Update(msg)
 	case tea.WindowSizeMsg:
-		msg.Height = msg.Height - 2
+		msg.Height = msg.Height - 3
 		m.help.Width = msg.Width
 
 		dividerStyles = dividerStyles.Height(msg.Height)
-    m.details.SetSize(msg.Width, msg.Height)
-		m.lists.SetSize(msg.Width, msg.Height)
+		m.detailsViewModel.SetSize(msg.Width, msg.Height)
+		m.listsViewModel.SetSize(msg.Width, msg.Height)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Help):
@@ -116,12 +123,16 @@ func (m TuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.ToggleDetails):
 			m.detailsVisible = !m.detailsVisible
+		case key.Matches(msg, m.keys.AddTask):
+			m.focusedView = CREATE_VIEW
 		default:
-			switch m.state {
-			case listsView:
-				m.lists, cmd = m.lists.Update(msg)
-			case detailsView:
-				m.details, cmd = m.details.Update(msg)
+			switch m.focusedView {
+			case CREATE_VIEW:
+				m.createViewModel, cmd = m.createViewModel.Update(msg)
+			case LIST_VIEW:
+				m.listsViewModel, cmd = m.listsViewModel.Update(msg)
+			case DETAILS_VIEW:
+				m.detailsViewModel, cmd = m.detailsViewModel.Update(msg)
 			}
 		}
 	}
