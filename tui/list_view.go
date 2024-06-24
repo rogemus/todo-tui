@@ -28,15 +28,17 @@ func NewListsModel(repo TasksRepository) listsModel {
 	todoItems := convertToListitem(todoTasks)
 
 	doneList := list.New(doneItems, itemDelegate{}, 0, 0)
-	todoList := list.New(todoItems, itemDelegate{}, 0, 0)
+	todoList := list.New(todoItems, itemDelegate{true}, 0, 0)
 
 	doneList.SetShowHelp(false)
 	doneList.SetShowStatusBar(false)
 	doneList.Title = "Done"
+	doneList.SetFilteringEnabled(false)
 
 	todoList.SetShowHelp(false)
 	todoList.SetShowStatusBar(false)
 	todoList.Title = "Todo"
+	todoList.SetFilteringEnabled(false)
 
 	return listsModel{
 		repo:        repo,
@@ -96,8 +98,14 @@ func (m listsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab":
 			if m.focusedList == TODO_LIST {
 				m.focusedList = DONE_LIST
+				m.done.Select(0)
+				m.done.SetDelegate(itemDelegate{true})
+				m.todo.SetDelegate(itemDelegate{false})
 			} else {
 				m.focusedList = TODO_LIST
+				m.todo.Select(0)
+				m.done.SetDelegate(itemDelegate{false})
+				m.todo.SetDelegate(itemDelegate{true})
 			}
 
 		case "D":

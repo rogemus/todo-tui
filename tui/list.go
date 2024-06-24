@@ -11,16 +11,23 @@ import (
 
 type ListModel list.Model
 
-type itemDelegate struct{}
+type itemDelegate struct {
+	cursorVisible bool
+}
 
-var itemStyles = lipgloss.NewStyle().PaddingLeft(2)
-var titleStyles = lipgloss.NewStyle()
+func (d itemDelegate) SetCursorVisible(visible bool) {
+	print("visible", visible)
+	d.cursorVisible = visible
+}
 
 func (d itemDelegate) Height() int { return 1 }
 
 func (d itemDelegate) Spacing() int { return 0 }
 
 func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+
+var itemStyles = lipgloss.NewStyle().PaddingLeft(2)
+var titleStyles = lipgloss.NewStyle()
 
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(task)
@@ -37,7 +44,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		statusStr = "✓"
 	}
 
-	if index == m.Index() {
+	if index == m.Index() && d.cursorVisible {
 		cursorStr = ">"
 	}
 
