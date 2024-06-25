@@ -32,12 +32,12 @@ func NewListsModel(repo TasksRepository) listsModel {
 
 	doneList.SetShowHelp(false)
 	doneList.SetShowStatusBar(false)
-	doneList.Title = "Done"
+	doneList.SetShowTitle(false)
 	doneList.SetFilteringEnabled(false)
 
 	todoList.SetShowHelp(false)
 	todoList.SetShowStatusBar(false)
-	todoList.Title = "Todo"
+	todoList.SetShowTitle(false)
 	todoList.SetFilteringEnabled(false)
 
 	return listsModel{
